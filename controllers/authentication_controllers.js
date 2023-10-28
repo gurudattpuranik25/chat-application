@@ -2,7 +2,7 @@ const validator = require("validator");
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 
-module.exports.register = async (req, res) => {
+const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!(name && email && password)) {
     res.json({ error: "All fields are mandatory." });
@@ -35,7 +35,7 @@ module.exports.register = async (req, res) => {
   }
 };
 
-module.exports.login = async (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
   if (!(email && password)) {
     res.json({ error: "Email and password are mandatory." });
@@ -70,3 +70,5 @@ module.exports.login = async (req, res) => {
     }
   }
 };
+
+module.exports = { register, login };
