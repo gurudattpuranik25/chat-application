@@ -3,6 +3,6 @@ const { register } = require("../controllers/authentication_controllers");
 
 const router = Router();
 
-router.get("/register", register);
+router.post("/register", register);
 
 module.exports = { router };
