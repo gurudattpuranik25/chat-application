@@ -34,3 +34,39 @@ module.exports.register = async (req, res) => {
     }
   }
 };
+
+module.exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  if (!(email && password)) {
+    res.json({ error: "Email and password are mandatory." });
+    return;
+  } else if (!validator.isEmail(email)) {
+    res.json({ error: "Enter a valid email address." });
+    return;
+  } else {
+    const userExists = await User.findOne({ email });
+    if (!userExists) {
+      res.json({ error: "User not found." });
+      return;
+    }
+    try {
+      const decodedPassword = await bcrypt.compare(
+        password,
+        userExists.password
+      );
+      if (userExists.email === email && decodedPassword) {
+        res.json({
+          success: `Login successfull.`,
+        });
+        return;
+      } else {
+        res.json({
+          error: `Invalid login credentials.`,
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+};
