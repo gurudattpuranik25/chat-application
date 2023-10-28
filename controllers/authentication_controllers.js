@@ -1,32 +1,32 @@
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 const User = require("../models/userModel");
 
 const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!(name && email && password)) {
-    res.json({ error: "All fields are mandatory." });
-    return;
+    return res.json({ error: "All fields are mandatory." });
   } else if (!validator.isEmail(email)) {
-    res.json({ error: "Enter a valid email address." });
-    return;
+    return res.json({ error: "Enter a valid email address." });
   } else if (password.length < 6) {
-    res.json({ error: "Password should have a minimum of 6 characters." });
-    return;
+    return res.json({
+      error: "Password should have a minimum of 6 characters.",
+    });
   } else {
     try {
       const userExists = await User.findOne({ email });
       if (userExists) {
-        res.json({
-          error: `User with the email ${email} already exists in the database.`,
+        return res.json({
+          error: `User with an email ${email} already exists in the database.`,
         });
-        return;
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      User.create({ name, email, password: hashedPassword })
+      await User.create({ name, email, password: hashedPassword })
         .then(() => {
-          res.json({ success: "User created" });
+          return res.json({ success: "User created" });
         })
         .catch((err) => console.log(err));
     } catch (error) {
@@ -38,16 +38,13 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!(email && password)) {
-    res.json({ error: "Email and password are mandatory." });
-    return;
+    return res.json({ error: "Email and password are mandatory." });
   } else if (!validator.isEmail(email)) {
-    res.json({ error: "Enter a valid email address." });
-    return;
+    return res.json({ error: "Enter a valid email address." });
   } else {
     const userExists = await User.findOne({ email });
     if (!userExists) {
-      res.json({ error: "User not found." });
-      return;
+      return res.json({ error: "User not found." });
     }
     try {
       const decodedPassword = await bcrypt.compare(
@@ -55,15 +52,19 @@ const login = async (req, res) => {
         userExists.password
       );
       if (userExists.email === email && decodedPassword) {
-        res.json({
-          success: `Login successfull.`,
+        const accessToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, {
+          expiresIn: "1h",
         });
-        return;
+        const cookieOptions = {
+          httpOnly: true,
+        };
+        return res
+          .cookie("accessToken", accessToken, cookieOptions)
+          .json({ success: "Login successful.", accessToken });
       } else {
-        res.json({
+        return res.json({
           error: `Invalid login credentials.`,
         });
-        return;
       }
     } catch (error) {
       console.log(error);
