@@ -27,6 +27,9 @@ const joinRoom = async (req, res) => {
   if (!findRoom) {
     return res.json({ error: `Room ID ${roomID} doesn't exist.` });
   }
+  if (findRoom.participants.length === 10) {
+    return res.json({ error: "Room is full, try after some time." });
+  }
   if (findRoom.participants.includes(userID)) {
     return res.json({
       error: `User ${userID} is already present in the room.`,
