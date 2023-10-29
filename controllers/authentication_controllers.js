@@ -4,16 +4,27 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/userModel");
 
+const validateUserCredentials = (name, email, password) => {
+  if (!(name && email && password)) {
+    return "All fields are mandatory.";
+  }
+
+  if (!validator.isEmail(email)) {
+    return "Enter a valid email address.";
+  }
+
+  if (password.length < 6) {
+    return "Password should have a minimum of 6 characters.";
+  }
+
+  return true;
+};
+
 const register = async (req, res) => {
   const { name, email, password } = req.body;
-  if (!(name && email && password)) {
-    return res.json({ error: "All fields are mandatory." });
-  } else if (!validator.isEmail(email)) {
-    return res.json({ error: "Enter a valid email address." });
-  } else if (password.length < 6) {
-    return res.json({
-      error: "Password should have a minimum of 6 characters.",
-    });
+  const checkValidUser = validateUserCredentials(name, email, password);
+  if (checkValidUser !== true) {
+    return res.json({ error: checkValidUser });
   } else {
     try {
       const userExists = await User.findOne({ email });
@@ -39,36 +50,33 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   if (!(email && password)) {
     return res.json({ error: "Email and password are mandatory." });
-  } else if (!validator.isEmail(email)) {
+  }
+  if (!validator.isEmail(email)) {
     return res.json({ error: "Enter a valid email address." });
-  } else {
-    const userExists = await User.findOne({ email });
-    if (!userExists) {
-      return res.json({ error: "User not found." });
+  }
+  const userExists = await User.findOne({ email });
+  if (!userExists) {
+    return res.json({ error: "User not found." });
+  }
+  try {
+    const decodedPassword = await bcrypt.compare(password, userExists.password);
+    if (userExists.email === email && decodedPassword) {
+      const accessToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, {
+        expiresIn: "1h",
+      });
+      const cookieOptions = {
+        httpOnly: true,
+      };
+      return res
+        .cookie("accessToken", accessToken, cookieOptions)
+        .json({ success: "Login successful.", accessToken });
+    } else {
+      return res.json({
+        error: `Invalid login credentials.`,
+      });
     }
-    try {
-      const decodedPassword = await bcrypt.compare(
-        password,
-        userExists.password
-      );
-      if (userExists.email === email && decodedPassword) {
-        const accessToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, {
-          expiresIn: "1h",
-        });
-        const cookieOptions = {
-          httpOnly: true,
-        };
-        return res
-          .cookie("accessToken", accessToken, cookieOptions)
-          .json({ success: "Login successful.", accessToken });
-      } else {
-        return res.json({
-          error: `Invalid login credentials.`,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  } catch (error) {
+    console.log(error);
   }
 };
 
