@@ -24,9 +24,6 @@ app.get("/", (req, res) => {
   res.sendFile("../public/index.html");
 });
 
-// app.get("/socket.io/socket.io.js", (req, res) => {
-//   res.sendFile(__dirname + "/node_modules/socket.io/client-dist/socket.io.js");
-// });
 
 app.use("/auth", authRouter);
 app.use("/rooms", roomRouter);
@@ -40,17 +37,6 @@ const io = new Server(server, {
 });
 
 setupSocketIO(io);
-// io.on("connection", async (socket) => {
-//   console.log("User connected");
-
-//   socket.on("message", (message) => {
-//     socket.broadcast.emit("message", message);
-//   });
-
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected");
-//   });
-// });
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

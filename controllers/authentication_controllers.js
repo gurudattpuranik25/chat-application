@@ -25,12 +25,12 @@ const register = async (req, res) => {
   const { name, email, password } = req.body;
   const checkValidUser = validateUserCredentials(name, email, password);
   if (checkValidUser !== true) {
-    return res.json({ error: checkValidUser });
+    return res.status(400).json({ error: checkValidUser });
   } else {
     try {
       const userExists = await User.findOne({ email });
       if (userExists) {
-        return res.json({
+        return res.status(406).json({
           error: `User with an email ${email} already exists.`,
         });
       }
@@ -38,7 +38,7 @@ const register = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       await User.create({ name, email, password: hashedPassword })
         .then(() => {
-          return res.json({ success: "User created" });
+          return res.status(201).json({ success: "User created" });
         })
         .catch((err) => console.log(err));
     } catch (error) {
@@ -51,19 +51,19 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   const isActiveUser = await UserSessions.findOne({ sessionID: email });
   if (isActiveUser) {
-    return res.json({
+    return res.status(409).json({
       error: "You are already logged in, kindly continue with the session.",
     });
   }
   if (!(email && password)) {
-    return res.json({ error: "Email and password are mandatory." });
+    return res.status(400).json({ error: "Email and password are mandatory." });
   }
   if (!validator.isEmail(email)) {
-    return res.json({ error: "Enter a valid email address." });
+    return res.status(400).json({ error: "Enter a valid email address." });
   }
   const userExists = await User.findOne({ email });
   if (!userExists) {
-    return res.json({ error: "User not found." });
+    return res.status(406).json({ error: "User not found." });
   }
   try {
     const decodedPassword = await bcrypt.compare(password, userExists.password);
@@ -79,9 +79,10 @@ const login = async (req, res) => {
         .catch((err) => res.json({ error: err }));
       return res
         .cookie("accessToken", accessToken, cookieOptions)
+        .status(200)
         .json({ success: "Login successful.", accessToken });
     } else {
-      return res.json({
+      return res.status(400).json({
         error: `Invalid login credentials.`,
       });
     }
@@ -93,22 +94,22 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    return res.json({ error: "Email ID is mandatory." });
+    return res.status(400).json({ error: "Email ID is mandatory." });
   }
   if (!validator.isEmail(email)) {
-    return res.json({ error: "Enter a valid email address." });
+    return res.status(400).json({ error: "Enter a valid email address." });
   }
   const loggedInUser = await UserSessions.findOne({ sessionID: email });
   if (loggedInUser) {
     await UserSessions.deleteOne({ sessionID: email })
       .then(() => {
-        return res.json({ success: "Logout successful." });
+        return res.status(200).json({ success: "Logout successful." });
       })
       .catch((err) => {
-        return res.json({ error: err });
+        return res.status(400).json({ error: err });
       });
   } else {
-    return res.json({ error: "User is not logged in." });
+    return res.status(401).json({ error: "User is not logged in." });
   }
 };
 
