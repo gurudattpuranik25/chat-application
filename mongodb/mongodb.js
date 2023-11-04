@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-require("dotenv").config();
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.wwdec24.mongodb.net/backend-service?retryWrites=true&w=majority`;
 
