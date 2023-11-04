@@ -3,8 +3,10 @@ const cors = require("cors");
 const { authRouter } = require("./routes/authRoutes");
 const { roomRouter } = require("./routes/roomRoutes");
 const { mongodb } = require("./mongodb/mongodb");
+const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
+const { setupSocketIO } = require("./controllers/room_controllers");
 
 const PORT = 3000;
 
@@ -22,27 +24,34 @@ app.get("/", (req, res) => {
   res.sendFile("../public/index.html");
 });
 
+// app.get("/socket.io/socket.io.js", (req, res) => {
+//   res.sendFile(__dirname + "/node_modules/socket.io/client-dist/socket.io.js");
+// });
+
 app.use("/auth", authRouter);
 app.use("/rooms", roomRouter);
 
-const io = new Server({
+const server = createServer(app);
+
+const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("User connected");
-  socket.on("chat message", (message) => {
-    console.log("message: " + message);
-    socket.broadcast.emit("chat message", message);
-  });
+setupSocketIO(io);
+// io.on("connection", async (socket) => {
+//   console.log("User connected");
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
+//   socket.on("message", (message) => {
+//     socket.broadcast.emit("message", message);
+//   });
 
-app.listen(PORT, () => {
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected");
+//   });
+// });
+
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -4,19 +4,23 @@ const { createRoom, joinRoom } = require("../controllers/room_controllers");
 
 const roomRouter = Router();
 
-const authenticateUserToken = (req, res, next) => {
-  const header = req.headers["authorization"];
+const authenticateUserToken = async (req, res, next) => {
+  const header = req.headers.authorization;
   const token = header && header.split(" ")[1];
   if (!token)
-    return res
-      .sendStatus(401)
-      .json({ error: "Unauthorized - Token not provided" });
+    return (
+      res
+        // .sendStatus(401)
+        .json({ error: "Unauthorized - Token not provided" })
+    );
 
   jwt.verify(token, process.env.JWT_SECRET_KEY, (err, data) => {
     if (err)
-      return res
-        .sendStatus(403)
-        .json({ error: "Unauthorized - Invalid token!" });
+      return (
+        res
+          // .sendStatus(403)
+          .json({ error: "Unauthorized - Invalid token!" })
+      );
     const { email } = data;
     req.email = email;
     next();

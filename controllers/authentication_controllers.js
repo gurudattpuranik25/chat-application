@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/userModel");
+const UserSessions = require("../models/userSessionModel");
+
 
 const validateUserCredentials = (name, email, password) => {
   if (!(name && email && password)) {
@@ -48,6 +50,12 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+  const isActiveUser = await UserSessions.findOne({ sessionID: email });
+  if (isActiveUser) {
+    return res.json({
+      error: "You are already logged in, kindly continue with the session.",
+    });
+  }
   if (!(email && password)) {
     return res.json({ error: "Email and password are mandatory." });
   }
@@ -67,6 +75,9 @@ const login = async (req, res) => {
       const cookieOptions = {
         httpOnly: true,
       };
+      await UserSessions.create({ sessionID: email, accessToken })
+        .then(() => {})
+        .catch((err) => res.json({ error: err }));
       return res
         .cookie("accessToken", accessToken, cookieOptions)
         .json({ success: "Login successful.", accessToken });
