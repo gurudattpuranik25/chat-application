@@ -5,7 +5,6 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const UserSessions = require("../models/userSessionModel");
 
-
 const validateUserCredentials = (name, email, password) => {
   if (!(name && email && password)) {
     return "All fields are mandatory.";
@@ -91,4 +90,26 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+const logout = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.json({ error: "Email ID is mandatory." });
+  }
+  if (!validator.isEmail(email)) {
+    return res.json({ error: "Enter a valid email address." });
+  }
+  const loggedInUser = await UserSessions.findOne({ sessionID: email });
+  if (loggedInUser) {
+    await UserSessions.deleteOne({ sessionID: email })
+      .then(() => {
+        return res.json({ success: "Logout successful." });
+      })
+      .catch((err) => {
+        return res.json({ error: err });
+      });
+  } else {
+    return res.json({ error: "User is not logged in." });
+  }
+};
+
+module.exports = { register, login, logout };
