@@ -7,6 +7,7 @@ const {
 
 const authRouter = Router();
 
+// authentication routes
 authRouter.post("/register", register);
 
 authRouter.post("/login", login);

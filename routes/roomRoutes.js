@@ -4,6 +4,7 @@ const { createRoom, joinRoom } = require("../controllers/room_controllers");
 
 const roomRouter = Router();
 
+// cerify the accessToken before creating or joining a room
 const authenticateUserToken = async (req, res, next) => {
   const header = req.headers.authorization;
   const token = header && header.split(" ")[1];
@@ -19,6 +20,7 @@ const authenticateUserToken = async (req, res, next) => {
   });
 };
 
+// room routes with middleware that verifies the accessToken
 roomRouter.post("/create-room", authenticateUserToken, createRoom);
 
 roomRouter.post("/join-room", authenticateUserToken, joinRoom);

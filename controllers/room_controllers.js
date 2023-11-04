@@ -2,20 +2,23 @@ const Room = require("../models/roomModel");
 
 let userID;
 
+// setup socketio connection
 const setupSocketIO = (io) => {
   io.on("connection", async (socket) => {
     console.log("User connected");
     userID = socket.id;
+    // broadcast messages
     socket.on("message", (message) => {
       socket.broadcast.emit("message", message);
     });
-
+    // check for dis-connection
     socket.on("disconnect", () => {
       console.log("User disconnected");
     });
   });
 };
 
+// create room controller
 const createRoom = async (req, res) => {
   const { roomID } = req.body;
   if (!roomID) {
@@ -23,10 +26,12 @@ const createRoom = async (req, res) => {
       error: "Room ID is mandatory to create chat room.",
     });
   }
+  // check if a room with same ID already exists in the database or not
   const findRoom = await Room.findOne({ roomID });
   if (findRoom) {
     return res.status(406).json({ error: `Room ID ${roomID} already exists.` });
   }
+  // create a room and add the current user as its first participant
   await Room.create({ roomID, participants: [userID] })
     .then(() => {
       return res.status(201).json({ success: "Room created successfully." });
@@ -34,6 +39,7 @@ const createRoom = async (req, res) => {
     .catch((err) => console.log(err));
 };
 
+// join room controller
 const joinRoom = async (req, res) => {
   const { userID, roomID } = req.body;
   if (!(userID && roomID)) {
@@ -42,6 +48,7 @@ const joinRoom = async (req, res) => {
       .json({ error: "User ID and room ID are mandatory." });
   }
 
+  // get the list of participants from all the rooms
   const result = await Room.aggregate([
     { $unwind: "$participants" },
     {
@@ -52,6 +59,7 @@ const joinRoom = async (req, res) => {
     },
   ]);
   const participantsList = result[0].allParticipants;
+  // check if the incoming participant has already joined an exisiting room or not
   if (participantsList.includes(userID)) {
     return res.status(406).json({
       error: `${userID} is already present in an existing room.`,
@@ -67,9 +75,10 @@ const joinRoom = async (req, res) => {
       .status(400)
       .json({ error: "Room is full, try after some time." });
   }
-
+  // add the incoming user to the participants array
   await room.participants.push(userID);
 
+  // save the details
   try {
     await room.save();
     return res.status(200).json({ success: `${userID} joined the room.` });

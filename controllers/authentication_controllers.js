@@ -5,6 +5,7 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const UserSessions = require("../models/userSessionModel");
 
+// validate user credentials
 const validateUserCredentials = (name, email, password) => {
   if (!(name && email && password)) {
     return "All fields are mandatory.";
@@ -21,6 +22,7 @@ const validateUserCredentials = (name, email, password) => {
   return true;
 };
 
+// user regsiter controller
 const register = async (req, res) => {
   const { name, email, password } = req.body;
   const checkValidUser = validateUserCredentials(name, email, password);
@@ -28,6 +30,7 @@ const register = async (req, res) => {
     return res.status(400).json({ error: checkValidUser });
   } else {
     try {
+      // check if the user is already registered
       const userExists = await User.findOne({ email });
       if (userExists) {
         return res.status(406).json({
@@ -35,6 +38,7 @@ const register = async (req, res) => {
         });
       }
 
+      // hash password and create a user in the database
       const hashedPassword = await bcrypt.hash(password, 10);
       await User.create({ name, email, password: hashedPassword })
         .then(() => {
@@ -47,14 +51,18 @@ const register = async (req, res) => {
   }
 };
 
+// user login controller
 const login = async (req, res) => {
   const { email, password } = req.body;
+  // check is the user is already logged in
   const isActiveUser = await UserSessions.findOne({ sessionID: email });
   if (isActiveUser) {
     return res.status(409).json({
       error: "You are already logged in, kindly continue with the session.",
     });
   }
+
+  // validate user credentials
   if (!(email && password)) {
     return res.status(400).json({ error: "Email and password are mandatory." });
   }
@@ -66,6 +74,7 @@ const login = async (req, res) => {
     return res.status(406).json({ error: "User not found." });
   }
   try {
+    // user login
     const decodedPassword = await bcrypt.compare(password, userExists.password);
     if (userExists.email === email && decodedPassword) {
       const accessToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, {
@@ -74,6 +83,7 @@ const login = async (req, res) => {
       const cookieOptions = {
         httpOnly: true,
       };
+      // add the user in sessions collection and generate an access token
       await UserSessions.create({ sessionID: email, accessToken })
         .then(() => {})
         .catch((err) => res.json({ error: err }));
@@ -91,6 +101,7 @@ const login = async (req, res) => {
   }
 };
 
+// logout controller
 const logout = async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -99,6 +110,7 @@ const logout = async (req, res) => {
   if (!validator.isEmail(email)) {
     return res.status(400).json({ error: "Enter a valid email address." });
   }
+  // delete user session
   const loggedInUser = await UserSessions.findOne({ sessionID: email });
   if (loggedInUser) {
     await UserSessions.deleteOne({ sessionID: email })
