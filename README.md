@@ -13,11 +13,24 @@ MongoDB serves as the persistent data storage, enabling secure and flexible data
 **Server:** Node, Express, MongoDB
 
 
+## NPM packages used:
+
+- bcrypt
+- express
+- jsonwebtoken
+- mongodb
+- mongoose
+- nodemon
+- socket.io
+- validator
+
+
 ## Features
 
 - User authentication & authorization
 - Session storage
-- Real-time chat service 
+- Create a chat room
+- Join a chat room
 
 
 
