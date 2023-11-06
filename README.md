@@ -13,8 +13,7 @@ MongoDB serves as the persistent data storage, enabling secure and flexible data
 **Server:** Node, Express, MongoDB
 
 
-## NPM packages used:
-
+## NPM Packages Used
 - bcrypt
 - express
 - jsonwebtoken
