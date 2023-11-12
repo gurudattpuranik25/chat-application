@@ -1,24 +1,12 @@
 const { Router } = require("express");
-const jwt = require("jsonwebtoken");
 const { createRoom, joinRoom } = require("../controllers/room_controllers");
+const {
+  authenticateUserToken,
+} = require("../middleware/authenticateUserToken");
 
 const roomRouter = Router();
 
-// cerify the accessToken before creating or joining a room
-const authenticateUserToken = async (req, res, next) => {
-  const header = req.headers.authorization;
-  const token = header && header.split(" ")[1];
-  if (!token)
-    return res.status(401).json({ error: "Unauthorized - Token not provided" });
-
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, data) => {
-    if (err)
-      return res.status(403).json({ error: "Unauthorized - Invalid token!" });
-    const { email } = data;
-    req.email = email;
-    next();
-  });
-};
+// verify the accessToken before creating or joining a room
 
 // room routes with middleware that verifies the accessToken
 roomRouter.post("/create-room", authenticateUserToken, createRoom);

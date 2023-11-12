@@ -1,22 +1,5 @@
 const Room = require("../models/roomModel");
-
-let userID;
-
-// setup socketio connection
-const setupSocketIO = (io) => {
-  io.on("connection", async (socket) => {
-    console.log("User connected");
-    userID = socket.id;
-    // broadcast messages
-    socket.on("message", (message) => {
-      socket.broadcast.emit("message", message);
-    });
-    // check for dis-connection
-    socket.on("disconnect", () => {
-      console.log("User disconnected");
-    });
-  });
-};
+const { emitSocketEvent } = require("../socketIO/socketIO");
 
 // create room controller
 const createRoom = async (req, res) => {
@@ -32,7 +15,7 @@ const createRoom = async (req, res) => {
     return res.status(406).json({ error: `Room ID ${roomID} already exists.` });
   }
   // create a room and add the current user as its first participant
-  await Room.create({ roomID, participants: [userID] })
+  await Room.create({ roomID, participants: [req.user._id] })
     .then(() => {
       return res.status(201).json({ success: "Room created successfully." });
     })
@@ -78,6 +61,17 @@ const joinRoom = async (req, res) => {
   // add the incoming user to the participants array
   await room.participants.push(userID);
 
+  // notify users about new joiners
+  room.participants.forEach((user) => {
+    if (user.id !== req.user._id) {
+      const userObj = {
+        id: req.user._id,
+        name: req.user.name,
+      };
+      emitSocketEvent(req, user.toString(), "newUserJoined", userObj);
+    }
+  });
+
   // save the details
   try {
     await room.save();
@@ -87,4 +81,4 @@ const joinRoom = async (req, res) => {
   }
 };
 
-module.exports = { createRoom, joinRoom, setupSocketIO };
+module.exports = { createRoom, joinRoom };

@@ -77,7 +77,9 @@ const login = async (req, res) => {
     // user login
     const decodedPassword = await bcrypt.compare(password, userExists.password);
     if (userExists.email === email && decodedPassword) {
-      const accessToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, {
+      const serializeUser = userExists.toJSON();
+      delete serializeUser.password;
+      const accessToken = jwt.sign(serializeUser, process.env.JWT_SECRET_KEY, {
         expiresIn: "1h",
       });
       const cookieOptions = {

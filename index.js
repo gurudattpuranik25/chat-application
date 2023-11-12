@@ -2,11 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const { authRouter } = require("./routes/authRoutes");
 const { roomRouter } = require("./routes/roomRoutes");
+const { messageRouter } = require("./routes/messageRoutes");
 const { mongodb } = require("./mongodb/mongodb");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { setupSocketIO } = require("./controllers/room_controllers");
+const { setupSocketIO } = require("./socketIO/socketIO");
 
 const PORT = 3000;
 
@@ -21,15 +22,20 @@ app.use(cookieParser());
 app.use(cors());
 
 // render static files
-app.use(express.static("../public"));
+// app.use(express.static("../public"));
 
-app.get("/", (req, res) => {
-  res.sendFile("../public/index.html");
-});
+// app.get("/", (req, res) => {
+//   res.sendFile("../public/index.html");
+// });
 
 // routes
 app.use("/auth", authRouter);
 app.use("/rooms", roomRouter);
+app.use("/messages", messageRouter);
+
+app.all("*", (req, res) => {
+  res.status(404).json({ message: "Page not found!" });
+});
 
 const server = createServer(app);
 
@@ -39,6 +45,8 @@ const io = new Server(server, {
     origin: "http://localhost:3000",
   },
 });
+
+app.set("io", io);
 
 setupSocketIO(io);
 
