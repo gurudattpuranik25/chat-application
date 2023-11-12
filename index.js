@@ -21,13 +21,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
 
-// render static files
-// app.use(express.static("../public"));
-
-// app.get("/", (req, res) => {
-//   res.sendFile("../public/index.html");
-// });
-
 // routes
 app.use("/auth", authRouter);
 app.use("/rooms", roomRouter);
