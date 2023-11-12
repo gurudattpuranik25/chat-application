@@ -80,7 +80,7 @@ const login = async (req, res) => {
       const serializeUser = userExists.toJSON();
       delete serializeUser.password;
       const accessToken = jwt.sign(serializeUser, process.env.JWT_SECRET_KEY, {
-        expiresIn: "1h",
+        expiresIn: "1d",
       });
       const cookieOptions = {
         httpOnly: true,

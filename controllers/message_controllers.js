@@ -1,5 +1,5 @@
 const Message = require("../models/messageModel");
-const Rooms = require("../models/roomModel");
+const Room = require("../models/roomModel");
 const { emitSocketEvent } = require("../socketIO/connectSocketIO");
 
 const sendMessage = async (req, res) => {
@@ -10,7 +10,7 @@ const sendMessage = async (req, res) => {
     });
   }
 
-  const isRoomExist = await Rooms.findOne({ roomID });
+  const isRoomExist = await Room.findOne({ roomID });
   if (!isRoomExist) {
     return res.status(406).json({ error: `Room ${roomID} doesn't exist.` });
   }
@@ -21,7 +21,7 @@ const sendMessage = async (req, res) => {
     message,
   };
 
-  const room = await Rooms.findOne({ roomID });
+  const room = await Room.findOne({ roomID });
 
   //   emit message to everyone in the room except the sender
   room.participants.forEach((user) => {
@@ -38,4 +38,22 @@ const sendMessage = async (req, res) => {
     .catch((err) => console.log(err));
 };
 
-module.exports = { sendMessage };
+// get message history by room ID
+const getMessageHistory = async (req, res) => {
+  const { roomID } = req.body;
+  if (!roomID) {
+    return res.status(400).json({ error: "Please provide room ID." });
+  }
+  const messages = await Message.find({ roomID });
+
+  if (messages.length === 0) {
+    return res.status(400).json({ error: "No messages found." });
+  }
+
+  const history = messages.map((message) => {
+    return `User ID : ${message._id}, message : ${message.message}`;
+  });
+  return res.status(200).json(history);
+};
+
+module.exports = { sendMessage, getMessageHistory };
