@@ -7,7 +7,7 @@ const { mongodb } = require("./mongodb/mongodb");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { setupSocketIO } = require("./socketIO/socketIO");
+const { setupSocketIO } = require("./socketIO/connectSocketIO");
 
 const PORT = 3000;
 

@@ -1,5 +1,5 @@
 const Room = require("../models/roomModel");
-const { emitSocketEvent } = require("../socketIO/socketIO");
+const { emitSocketEvent } = require("../socketIO/connectSocketIO");
 
 // create room controller
 const createRoom = async (req, res) => {

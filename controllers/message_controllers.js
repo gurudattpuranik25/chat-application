@@ -1,6 +1,6 @@
 const Message = require("../models/messageModel");
 const Rooms = require("../models/roomModel");
-const { emitSocketEvent } = require("../socketIO/socketIO");
+const { emitSocketEvent } = require("../socketIO/connectSocketIO");
 
 const sendMessage = async (req, res) => {
   const { roomID, message } = req.body;
