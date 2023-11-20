@@ -1,6 +1,6 @@
 const Message = require("../models/messageModel");
 const Room = require("../models/roomModel");
-const { emitSocketEvent } = require("../socketIO/connectSocketIO");
+const { emitSocketEvent } = require("../socketIO/socketIO");
 
 const sendMessage = async (req, res) => {
   const { roomID, message } = req.body;
@@ -10,8 +10,8 @@ const sendMessage = async (req, res) => {
     });
   }
 
-  const isRoomExist = await Room.findOne({ roomID });
-  if (!isRoomExist) {
+  const room = await Room.findOne({ roomID });
+  if (!room) {
     return res.status(406).json({ error: `Room ${roomID} doesn't exist.` });
   }
 
@@ -21,12 +21,14 @@ const sendMessage = async (req, res) => {
     message,
   };
 
-  const room = await Room.findOne({ roomID });
-
   //   emit message to everyone in the room except the sender
-  room.participants.forEach((user) => {
-    if (user !== req.user._id) {
-      emitSocketEvent(req, user.toString(), "newRoomMessage", messageDetails);
+  room.participants.forEach((userID) => {
+    if (userID !== req.user._id) {
+      try {
+        emitSocketEvent(req, userID, "newRoomMessage", messageDetails);
+      } catch (error) {
+        console.error("Error emitting newRoomMessage:", error);
+      }
     }
   });
 

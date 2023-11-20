@@ -1,5 +1,5 @@
 const Room = require("../models/roomModel");
-const { emitSocketEvent } = require("../socketIO/connectSocketIO");
+const { emitSocketEvent } = require("../socketIO/socketIO");
 
 // create room controller
 const createRoom = async (req, res) => {
@@ -62,13 +62,13 @@ const joinRoom = async (req, res) => {
   await room.participants.push(userID);
 
   // notify users about new joiners
-  room.participants.forEach((user) => {
-    if (user.id !== req.user._id) {
+  room.participants.forEach((userID) => {
+    if (userID !== req.user._id) {
       const userObj = {
         id: req.user._id,
         name: req.user.name,
       };
-      emitSocketEvent(req, user.toString(), "newUserJoined", userObj);
+      emitSocketEvent(req, userID, "newUserJoined", userObj);
     }
   });
 

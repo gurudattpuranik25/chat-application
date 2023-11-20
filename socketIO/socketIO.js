@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 
 const setupSocketIO = async (io) => {
-  io.on("connection", async (socket) => {
+  return io.on("connection", async (socket) => {
     // check for user token
     const token = socket.handshake.headers.token;
 
