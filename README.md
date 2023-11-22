@@ -111,7 +111,7 @@ Install dependencies
 Start the server
 
 ```bash
-  node index.js
+  npm start
 ```
 
 
