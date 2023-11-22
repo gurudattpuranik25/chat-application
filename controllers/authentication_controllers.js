@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/userModel");
+const Room = require("../models/roomModel");
 const UserSessions = require("../models/userSessionModel");
 
 // validate user credentials
@@ -115,6 +116,31 @@ const logout = async (req, res) => {
   // delete user session
   const loggedInUser = await UserSessions.findOne({ sessionID: email });
   if (loggedInUser) {
+    const user = await User.findOne({ email });
+    const roomParticipants = await Room.aggregate([
+      { $unwind: "$participants" },
+      {
+        $group: {
+          _id: null,
+          allParticipants: { $addToSet: "$participants" },
+        },
+      },
+    ]);
+    const participantsList = roomParticipants[0].allParticipants;
+
+    // delete the user from room after logout
+    if (participantsList.includes(user.id)) {
+      await Room.updateOne(
+        {},
+        {
+          $pull: {
+            participants: user.id,
+          },
+        }
+      );
+    }
+
+    // delete the user from active sessions
     await UserSessions.deleteOne({ sessionID: email })
       .then(() => {
         return res.status(200).json({ success: "Logout successful." });

@@ -1,4 +1,6 @@
 const Room = require("../models/roomModel");
+const Session = require("../models/userSessionModel");
+const User = require("../models/userModel");
 const { emitSocketEvent } = require("../socketIO/socketIO");
 
 // create room controller
@@ -31,6 +33,34 @@ const joinRoom = async (req, res) => {
       .json({ error: "User ID and room ID are mandatory." });
   }
 
+  const room = await Room.findOne({ roomID });
+  if (!room) {
+    return res.status(400).json({ error: `Room ID ${roomID} doesn't exist.` });
+  }
+  if (room.participants.length === 10) {
+    return res
+      .status(400)
+      .json({ error: "Room is full, try after some time." });
+  }
+
+  try {
+    const findUser = await User.findById(userID);
+    if (findUser === null) {
+      return res.status(400).json({
+        error: `${userID} is not registered. Please register and try again.`,
+      });
+    }
+    const sessionID = findUser.email;
+    const isLoggedIn = await Session.findOne({ sessionID });
+    if (!isLoggedIn) {
+      return res
+        .status(400)
+        .json({ error: "Kindly login before joining the room." });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
   // get the list of participants from all the rooms
   const result = await Room.aggregate([
     { $unwind: "$participants" },
@@ -49,15 +79,6 @@ const joinRoom = async (req, res) => {
     });
   }
 
-  const room = await Room.findOne({ roomID });
-  if (!room) {
-    return res.status(400).json({ error: `Room ID ${roomID} doesn't exist.` });
-  }
-  if (room.participants.length === 10) {
-    return res
-      .status(400)
-      .json({ error: "Room is full, try after some time." });
-  }
   // add the incoming user to the participants array
   await room.participants.push(userID);
 
@@ -81,4 +102,41 @@ const joinRoom = async (req, res) => {
   }
 };
 
-module.exports = { createRoom, joinRoom };
+// leave room controller
+const leaveRoom = async (req, res) => {
+  const { userID, roomID } = req.body;
+  if (!(userID && roomID)) {
+    return res
+      .status(400)
+      .json({ error: "User ID and room ID are mandatory." });
+  }
+  // check if room exists or not
+  const room = await Room.findOne({ roomID });
+  if (!room) {
+    return res.status(400).json({ error: `Room ID ${roomID} doesn't exist.` });
+  }
+  // check if the user is present in the room or not
+  if (!room.participants.includes(userID)) {
+    return res
+      .status(400)
+      .json({ error: `${userID} is not present in the room.` });
+  }
+  // delete user from the room
+  try {
+    await Room.updateOne(
+      { roomID },
+      {
+        $pull: {
+          participants: userID,
+        },
+      }
+    );
+    return res.status(200).json({ success: `${userID} left the room.` });
+  } catch {
+    return res
+      .status(500)
+      .json({ error: `${userID} failed to leave the room.` });
+  }
+};
+
+module.exports = { createRoom, joinRoom, leaveRoom };
