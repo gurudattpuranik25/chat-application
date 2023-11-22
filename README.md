@@ -1,10 +1,8 @@
 
 # Backend Service for a Chat Application
 
-An efficient and scalable backend service built using Node.js and MongoDB to power a real-time Chat Application. This service manages authentication, authorization and provides seamless interaction. 
+An efficient and scalable backend service built using Node.js and MongoDB to power a real-time Chat Application. This service manages authentication, and authorization and provides seamless interaction. 
 MongoDB serves as the persistent data storage, enabling secure and flexible data management for messages and user profiles. 
-
-
 
 
 
@@ -31,6 +29,7 @@ MongoDB serves as the persistent data storage, enabling secure and flexible data
 - Create a chat room
 - Join a chat room
 - Leave the chat room
+- Send a message to room participants
 
 
 
@@ -83,6 +82,11 @@ To run this project, you will need to add the following environment variables to
   POST http://localhost:3000/rooms/leave-room
 ```
 
+#### Send message
+
+```http
+  POST http://localhost:3000/messages/send
+```
 
 ## Run Locally
 
