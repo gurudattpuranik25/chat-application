@@ -30,6 +30,7 @@ MongoDB serves as the persistent data storage, enabling secure and flexible data
 - Session storage
 - Create a chat room
 - Join a chat room
+- Leave the chat room
 
 
 
@@ -76,6 +77,11 @@ To run this project, you will need to add the following environment variables to
   POST http://localhost:3000/rooms/join-room
 ```
 
+#### Leave room
+
+```http
+  POST http://localhost:3000/rooms/leave-room
+```
 
 
 ## Run Locally
